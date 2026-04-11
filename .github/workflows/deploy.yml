@@ -15,31 +15,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install lftp
-        run: sudo apt-get install -y lftp netcat-openbsd
+      - name: Install paramiko
+        run: pip install paramiko
 
-      - name: Test SSH port connectivity
-        run: |
-          echo "=== Testing port 22 ==="
-          nc -zv -w 8 ${{ secrets.SSH_HOST }} 22 && echo "Port 22: OPEN" || echo "Port 22: CLOSED"
-
-      - name: Deploy via SFTP (lftp + netrc)
-        run: |
-          printf 'machine %s\nlogin %s\npassword %s\n' \
-            "${{ secrets.SSH_HOST }}" \
-            "${{ secrets.SSH_USER }}" \
-            "${{ secrets.SSH_PASSWORD }}" > ~/.netrc
-          chmod 600 ~/.netrc
-
-          lftp -d sftp://${{ secrets.SSH_HOST }} <<'LFTP'
-          set sftp:auto-confirm yes
-          set net:max-retries 3
-          set net:reconnect-interval-base 5
-          mirror --reverse --delete --verbose \
-            --exclude "^\.git" \
-            --exclude "^\.github" \
-            . /pravo-trans.ru/public_html/
-          bye
-          LFTP
-
-          rm -f ~/.netrc
+      - name: Deploy via SFTP (paramiko)
+        run: python3 deploy.py
+        env:
+          SSH_HOST:     ${{ secrets.SSH_HOST }}
+          SSH_USER:     ${{ secrets.SSH_USER }}
+          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+          SSH_PATH:     ${{ secrets.SSH_PATH }}
