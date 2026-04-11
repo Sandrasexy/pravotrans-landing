@@ -8,54 +8,20 @@ on:
 
 jobs:
   deploy:
-    name: SFTP deploy to beget.tech
+    name: Deploy to beget.tech
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Test connectivity
-        run: |
-          echo "Testing SSH to $SSH_HOST:22"
-          timeout 10 bash -c "echo > /dev/tcp/$SSH_HOST/22" && echo "PORT 22 OPEN" || echo "PORT 22 CLOSED"
-          nc -zv -w 10 $SSH_HOST 22 2>&1 || true
-        env:
-          SSH_HOST: ${{ secrets.SSH_HOST }}
 
       - name: Install paramiko
         run: pip install paramiko
 
       - name: Deploy via SFTP
-        continue-on-error: true
-        run: |
-          python3 deploy.py > /tmp/deploy_out.txt 2>&1
-          echo "DEPLOY_RC=$?" >> $GITHUB_ENV
-          cat /tmp/deploy_out.txt
+        run: python3 deploy.py
         env:
           SSH_HOST:     ${{ secrets.SSH_HOST }}
           SSH_USER:     ${{ secrets.SSH_USER }}
           SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
           SSH_PATH:     ${{ secrets.SSH_PATH }}
-
-      - name: Save deploy log to repo
-        if: always()
-        run: |
-          # Write log to file and commit via git
-          cp /tmp/deploy_out.txt deploy-log.txt 2>/dev/null || echo "No log file" > deploy-log.txt
-          git config user.email "github-actions@github.com"
-          git config user.name "GitHub Actions"
-          git add deploy-log.txt
-          git diff --staged --quiet || git commit -m "ci: save deploy log [skip ci]"
-          git push origin main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Check deploy result
-        run: |
-          echo "Deploy exit code: $DEPLOY_RC"
-          [ "$DEPLOY_RC" = "0" ] || exit 1
