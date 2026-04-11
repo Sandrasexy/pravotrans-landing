@@ -8,24 +8,30 @@ on:
 
 jobs:
   deploy:
-    name: Rsync to beget.tech
+    name: SFTP deploy to beget.tech
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install sshpass
-        run: sudo apt-get install -y sshpass
+      - name: Install lftp
+        run: sudo apt-get install -y lftp
 
-      - name: Deploy via rsync over SSH
+      - name: Deploy via SFTP (lftp)
         run: |
-          sshpass -p "$SSH_PASSWORD" rsync -avz --delete \
-            --exclude='.git' \
-            --exclude='.github' \
-            -e "ssh -o StrictHostKeyChecking=no -p 22" \
-            ./ \
-            "$SSH_USER@$SSH_HOST:$SSH_PATH"
+          lftp -c "
+            set sftp:auto-confirm yes;
+            set net:max-retries 3;
+            set net:reconnect-interval-base 5;
+            open sftp://$SSH_USER:$SSH_PASSWORD@$SSH_HOST;
+            mirror --reverse --delete --verbose \
+              --exclude='^\\..*/.*' \
+              --exclude='^.git/' \
+              --exclude='^.github/' \
+              . $SSH_PATH;
+            bye
+          "
         env:
           SSH_HOST:     ${{ secrets.SSH_HOST }}
           SSH_USER:     ${{ secrets.SSH_USER }}
