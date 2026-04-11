@@ -1,41 +1,37 @@
-=== Deploying to prtopizr_pravotrans@prtopizr.beget.tech:/pravo-trans.ru/public_html ===
+=== Deploying to prtopizr_pravotrans@prtopizr.beget.tech ===
+    SSH_PATH hint: /pravo-trans.ru/public_html
+SSH: OK
 
-[1] Testing SSH connection...
-  SSH test: OK
+[Discovering remote path...]
+/home/p/prtopizr/pravo-trans.ru/public_html
+---
+cgi-bin
+index.php
+---
+/home/p/prtopizr/pravo-trans.ru/public_html
+Home dir: /home/p/prtopizr/pravo-trans.ru/public_html
+Found public_html paths: ['/home/p/prtopizr/pravo-trans.ru/public_html', '/home/p/prtopizr/pravo-trans.ru/public_html']
+Using discovered path: /home/p/prtopizr/pravo-trans.ru/public_html
 
-[2] Trying rsync...
-  rsync RC: 11
-  stdout: sending incremental file list
+Using remote path: /home/p/prtopizr/pravo-trans.ru/public_html
 
-  stderr: Warning: Permanently added 'prtopizr.beget.tech' (ED25519) to the list of known hosts.
-Welcome to LTD BeGet SSH Server 'madmax'
-rsync: mkdir "/pravo-trans.ru/public_html" failed: No such file or directory (2)
-rsync error: error in file IO (code 11) at main.c(664) [Receiver=3.1.3dev]
-
-
-[3] Trying sftp batch upload...
-  sftp RC: 0
-  stdout: sftp> -mkdir /pravo-trans.ru/public_html/spasibo
-sftp> -mkdir /pravo-trans.ru/public_html/thanks3
-sftp> put index.html /pravo-trans.ru/public_html/index.html
-Uploading index.html to /pravo-trans.ru/public_html/index.html
-sftp> put script.js /pravo-trans.ru/public_html/script.js
-Uploading script.js to /pravo-trans.ru/public_html/script.js
-sftp> put spasibo/index.html /pravo-trans.ru/public_html/spasibo/index.html
-Uploading spasibo/index.html to /pravo-trans.ru/public_html/spasibo/index.html
-sftp> put styles.css /pravo-trans.ru/public_html/styles.css
-Uploading styles.css to /pravo-trans.ru/public_html/styles.css
-sftp> put thanks3/index.html /pravo-trans.ru/public_html/thanks3/index.html
-Uploading thanks3/index.html to /pravo-trans.ru/public_html/thanks3/index.html
+[Uploading 5 files via sftp...]
+STDOUT: sftp> -mkdir /home/p/prtopizr/pravo-trans.ru/public_html/spasibo
+sftp> -mkdir /home/p/prtopizr/pravo-trans.ru/public_html/thanks3
+sftp> put index.html /home/p/prtopizr/pravo-trans.ru/public_html/index.html
+Uploading index.html to /home/p/prtopizr/pravo-trans.ru/public_html/index.html
+sftp> put script.js /home/p/prtopizr/pravo-trans.ru/public_html/script.js
+Uploading script.js to /home/p/prtopizr/pravo-trans.ru/public_html/script.js
+sftp> put spasibo/index.html /home/p/prtopizr/pravo-trans.ru/public_html/spasibo/index.html
+Uploading spasibo/index.html to /home/p/prtopizr/pravo-trans.ru/public_html/spasibo/index.html
+sftp> put styles.css /home/p/prtopizr/pravo-trans.ru/public_html/styles.css
+Uploading styles.css to /home/p/prtopizr/pravo-trans.ru/public_html/styles.css
+sftp> put thanks3/index.html /home/p/prtopizr/pravo-trans.ru/public_html/thanks3/index.html
+Uploading thanks3/index.html to /home/p/prtopizr/pravo-trans.ru/public_html/thanks3/index.html
 sftp> bye
 
-  stderr: directory
-remote mkdir "/pravo-trans.ru/public_html/thanks3": No such file or directory
-dest open "/pravo-trans.ru/public_html/index.html": No such file or directory
-dest open "/pravo-trans.ru/public_html/script.js": No such file or directory
-dest open "/pravo-trans.ru/public_html/spasibo/index.html": No such file or directory
-dest open "/pravo-trans.ru/public_html/styles.css": No such file or directory
-dest open "/pravo-trans.ru/public_html/thanks3/index.html": No such file or directory
+STDERR: Connected to prtopizr.beget.tech.
 
+Verify index.html: -rw-------+ 1 prtopizr newcustomers 49777 Apr 11 11:36 /home/p/prtopizr/pravo-trans.ru/public_html/index.html
 
-✓ sftp batch upload succeeded! 5 files.
+✓ Deployment succeeded! 5 files uploaded to /home/p/prtopizr/pravo-trans.ru/public_html
