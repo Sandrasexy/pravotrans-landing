@@ -1,9 +1,26 @@
+Traceback (most recent call last):
+  File "/home/runner/work/pravotrans-landing/pravotrans-landing/deploy.py", line 92, in <module>
+    ftp.login(user, password)
+  File "/usr/lib/python3.12/ftplib.py", line 414, in login
+    resp = self.sendcmd('PASS ' + passwd)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/ftplib.py", line 281, in sendcmd
+    return self.getresp()
+           ^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/ftplib.py", line 254, in getresp
+    raise error_perm(resp)
+ftplib.error_perm: 530 Login incorrect.
 === Deploying to prtopizr_pravotrans@prtopizr.beget.tech:/pravo-trans.ru/public_html ===
 
-[1] Testing SSH connection and remote path...
-STDOUT: 
-STDERR: Warning: Permanently added 'prtopizr.beget.tech' (ED25519) to the list of known hosts.
+[1] Testing SSH connection...
+  SSH test: FAILED
+  stdout: 
+  stderr: Warning: Permanently added 'prtopizr.beget.tech' (ED25519) to the list of known hosts.
 Welcome to LTD BeGet SSH Server 'madmax'
 Permission denied, please try again.
-RC: 5
-SSH connection FAILED. Cannot deploy.
+
+[4] Trying FTP (port 21)...
+  FTP connected to prtopizr.beget.tech:21
+  FTP ERROR: 530 Login incorrect.
+
+✗ All deployment methods failed.
