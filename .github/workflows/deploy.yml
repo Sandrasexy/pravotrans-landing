@@ -17,29 +17,41 @@ jobs:
 
       - name: Test connectivity
         run: |
-          echo "Testing SSH connectivity to $SSH_HOST:22 ..."
+          echo "Testing SSH to $SSH_HOST:22"
           timeout 10 bash -c "echo > /dev/tcp/$SSH_HOST/22" && echo "PORT 22 OPEN" || echo "PORT 22 CLOSED/TIMEOUT"
           nc -zv -w 10 $SSH_HOST 22 2>&1 || true
-          ssh-keyscan -T 10 $SSH_HOST 2>&1 || echo "ssh-keyscan failed"
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
 
       - name: Install paramiko
         run: pip install paramiko
 
-      - name: Deploy via SFTP (paramiko)
+      - name: Deploy via SFTP
+        id: deploy
+        continue-on-error: true
         run: |
-          echo "## Deploy Output" >> $GITHUB_STEP_SUMMARY
           python3 deploy.py > /tmp/deploy_out.txt 2>&1
-          RESULT=$?
+          echo "DEPLOY_RC=$?" >> $GITHUB_ENV
           cat /tmp/deploy_out.txt
+          echo "## Deploy Output" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           cat /tmp/deploy_out.txt >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          echo "Exit code: $RESULT" >> $GITHUB_STEP_SUMMARY
-          exit $RESULT
         env:
           SSH_HOST:     ${{ secrets.SSH_HOST }}
           SSH_USER:     ${{ secrets.SSH_USER }}
           SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
           SSH_PATH:     ${{ secrets.SSH_PATH }}
+
+      - name: Upload deploy log artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-log
+          path: /tmp/deploy_out.txt
+          retention-days: 7
+
+      - name: Check deploy result
+        run: |
+          echo "Deploy exit code: $DEPLOY_RC"
+          [ "$DEPLOY_RC" = "0" ] || exit 1
