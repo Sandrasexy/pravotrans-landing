@@ -15,11 +15,29 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Test connectivity
+        run: |
+          echo "Testing SSH connectivity to $SSH_HOST:22 ..."
+          timeout 10 bash -c "echo > /dev/tcp/$SSH_HOST/22" && echo "PORT 22 OPEN" || echo "PORT 22 CLOSED/TIMEOUT"
+          nc -zv -w 10 $SSH_HOST 22 2>&1 || true
+          ssh-keyscan -T 10 $SSH_HOST 2>&1 || echo "ssh-keyscan failed"
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+
       - name: Install paramiko
         run: pip install paramiko
 
       - name: Deploy via SFTP (paramiko)
-        run: python3 deploy.py
+        run: |
+          echo "## Deploy Output" >> $GITHUB_STEP_SUMMARY
+          python3 deploy.py > /tmp/deploy_out.txt 2>&1
+          RESULT=$?
+          cat /tmp/deploy_out.txt
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          cat /tmp/deploy_out.txt >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "Exit code: $RESULT" >> $GITHUB_STEP_SUMMARY
+          exit $RESULT
         env:
           SSH_HOST:     ${{ secrets.SSH_HOST }}
           SSH_USER:     ${{ secrets.SSH_USER }}
