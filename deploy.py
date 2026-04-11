@@ -1,78 +1,103 @@
 #!/usr/bin/env python3
-import os, sys, pathlib, traceback
+"""Deploy via sshpass+rsync with fallback to sshpass+sftp batch"""
+import os, sys, subprocess, pathlib, shutil
 
 host     = os.environ["SSH_HOST"]
 user     = os.environ["SSH_USER"]
 password = os.environ["SSH_PASSWORD"]
 remote   = os.environ["SSH_PATH"].rstrip("/")
 
-print(f"Connecting to {user}@{host}:22 ...")
-print(f"Remote path: {remote}")
+SSH_OPTS = ["-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "-o", "ConnectTimeout=30"]
 
-try:
-    import paramiko
-except ImportError:
-    print("ERROR: paramiko not installed"); sys.exit(1)
+print(f"=== Deploying to {user}@{host}:{remote} ===")
 
-client = paramiko.SSHClient()
-client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+# --- Step 1: Test SSH connection and verify remote path ---
+print("\n[1] Testing SSH connection and remote path...")
+test_cmd = ["sshpass", "-p", password, "ssh"] + SSH_OPTS + [
+    f"{user}@{host}",
+    f"ls -la '{remote}' 2>&1 || (echo 'PATH_MISSING'; find /home -maxdepth 5 -name public_html 2>/dev/null | head -5; ls ~ 2>/dev/null)"
+]
+r = subprocess.run(test_cmd, capture_output=True, text=True, timeout=30)
+print("STDOUT:", r.stdout.strip())
+if r.stderr.strip():
+    print("STDERR:", r.stderr.strip())
+print("RC:", r.returncode)
 
-try:
-    client.connect(
-        hostname=host, port=22,
-        username=user, password=password,
-        allow_agent=False, look_for_keys=False,
-        timeout=30, banner_timeout=30, auth_timeout=30
-    )
-    print("SSH connected OK")
-except Exception as e:
-    print(f"SSH CONNECT FAILED: {e}")
-    traceback.print_exc()
+if r.returncode != 0:
+    print("SSH connection FAILED. Cannot deploy.")
     sys.exit(1)
 
-# Verify remote path exists
-stdin, stdout, stderr = client.exec_command(f"ls -la {remote} 2>&1 || echo NOTFOUND")
-out = stdout.read().decode().strip()
-print(f"Remote ls: {out}")
-if "NOTFOUND" in out or "No such file" in out:
-    print(f"ERROR: Remote path {remote!r} does not exist. Trying to find the right path...")
-    stdin, stdout, stderr = client.exec_command("find /home -maxdepth 5 -name 'public_html' 2>/dev/null | head -5; echo ---; ls /home/ 2>/dev/null; echo ---; pwd")
-    out2 = stdout.read().decode().strip()
-    print(f"Discovery: {out2}")
+if "PATH_MISSING" in r.stdout:
+    print(f"\nERROR: Remote path '{remote}' does not exist!")
+    print("Please check SSH_PATH secret value.")
     sys.exit(1)
 
-sftp = client.open_sftp()
+# --- Step 2: Try rsync ---
+print("\n[2] Attempting rsync deployment...")
+if shutil.which("rsync"):
+    rsync_cmd = [
+        "sshpass", "-p", password,
+        "rsync", "-avz", "--delete",
+        "--exclude=.git", "--exclude=.github", "--exclude=deploy.py",
+        "-e", f"ssh {' '.join(SSH_OPTS)}",
+        "./",
+        f"{user}@{host}:{remote}/"
+    ]
+    r2 = subprocess.run(rsync_cmd, capture_output=True, text=True, timeout=120)
+    print("STDOUT:", r2.stdout[-3000:] if len(r2.stdout) > 3000 else r2.stdout)
+    if r2.stderr.strip():
+        print("STDERR:", r2.stderr.strip())
+    print("RC:", r2.returncode)
 
+    if r2.returncode == 0:
+        print("\n✓ rsync deployment succeeded!")
+        sys.exit(0)
+    else:
+        print("\nrsync failed, falling back to sftp batch upload...")
+else:
+    print("rsync not found, using sftp batch upload...")
+
+# --- Step 3: Fallback — sftp batch upload ---
+print("\n[3] Building file list for sftp batch upload...")
 SKIP = {".git", ".github", "deploy.py"}
-
-def ensure_dir(path):
-    try: sftp.stat(path)
-    except FileNotFoundError:
-        parts = path.split("/")
-        for i in range(2, len(parts)+1):
-            d = "/".join(parts[:i])
-            try: sftp.stat(d)
-            except FileNotFoundError:
-                try: sftp.mkdir(d)
-                except: pass
-
 local_root = pathlib.Path(".")
-uploaded = 0
-for local_file in sorted(local_root.rglob("*")):
-    if local_file.is_dir(): continue
-    parts = local_file.parts
-    if any(p in SKIP or p.startswith(".") for p in parts): continue
-    rel = str(local_file)
-    remote_path = f"{remote}/{rel}"
-    remote_dir = remote_path.rsplit("/", 1)[0]
-    ensure_dir(remote_dir)
-    try:
-        sftp.put(str(local_file), remote_path)
-        print(f"  -> {rel}")
-        uploaded += 1
-    except Exception as e:
-        print(f"  FAIL {rel}: {e}")
+sftp_cmds = [f"cd {remote}"]
 
-sftp.close()
-client.close()
-print(f"\nDone: {uploaded} files uploaded to {host}:{remote}")
+uploaded_files = []
+for local_file in sorted(local_root.rglob("*")):
+    if local_file.is_dir():
+        continue
+    parts = local_file.parts
+    if any(p in SKIP or p.startswith(".") for p in parts):
+        continue
+    uploaded_files.append(local_file)
+
+# Create dirs first
+dirs_seen = set()
+for lf in uploaded_files:
+    rel_dir = str(lf.parent)
+    if rel_dir != "." and rel_dir not in dirs_seen:
+        sftp_cmds.append(f"-mkdir {remote}/{rel_dir}")
+        dirs_seen.add(rel_dir)
+
+for lf in uploaded_files:
+    sftp_cmds.append(f"put {lf} {remote}/{lf}")
+
+sftp_cmds.append("bye")
+batch = "\n".join(sftp_cmds)
+
+print(f"  Will upload {len(uploaded_files)} files")
+
+sftp_cmd = ["sshpass", "-p", password, "sftp"] + SSH_OPTS + [f"{user}@{host}"]
+r3 = subprocess.run(sftp_cmd, input=batch.encode(), capture_output=True, timeout=120)
+print("STDOUT:", r3.stdout.decode()[-2000:])
+if r3.stderr:
+    print("STDERR:", r3.stderr.decode()[-1000:])
+print("RC:", r3.returncode)
+
+if r3.returncode == 0:
+    print(f"\n✓ sftp batch upload succeeded! {len(uploaded_files)} files.")
+    sys.exit(0)
+else:
+    print("\nsftp batch upload also failed.")
+    sys.exit(1)
