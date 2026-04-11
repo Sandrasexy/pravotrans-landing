@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Заявка принята — ПравоТранс</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f9; color: #1e2533; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+    .card { background: #fff; border-radius: 12px; padding: 56px 48px; text-align: center; max-width: 560px; width: 100%; box-shadow: 0 8px 40px rgba(15,39,68,0.1); border-top: 4px solid #c9a227; }
+    .icon { font-size: 3.5rem; margin-bottom: 20px; }
+    h1 { font-size: 1.8rem; font-weight: 700; color: #0f2744; margin-bottom: 12px; }
+    p { color: #5a6478; font-size: 1rem; line-height: 1.7; margin-bottom: 8px; }
+    .steps { text-align: left; background: #f0f4f9; border-radius: 8px; padding: 20px 24px; margin: 24px 0; }
+    .steps li { font-size: 0.92rem; color: #1e2533; padding: 6px 0; display: flex; gap: 10px; align-items: flex-start; }
+    .steps li::before { content: '✓'; color: #1a8c3f; font-weight: 700; flex-shrink: 0; }
+    .phone { font-size: 1.3rem; font-weight: 700; color: #0f2744; margin: 16px 0; display: block; }
+    .btn { display: inline-block; margin-top: 20px; background: #1a8c3f; color: #fff; padding: 13px 32px; border-radius: 6px; font-size: 0.95rem; font-weight: 600; text-decoration: none; transition: background .2s; }
+    .btn:hover { background: #146830; }
+    .logo { font-size: 1.1rem; font-weight: 700; color: #0f2744; margin-bottom: 32px; opacity: 0.6; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">ПравоТранс</div>
+    <div class="icon">📋</div>
+    <h1>Заявка отправлена!</h1>
+    <p>Мы получили все ваши данные и приступаем к первичному анализу ситуации.</p>
+    <ul class="steps">
+      <li>Юрист свяжется с вами в течение 30 минут</li>
+      <li>Проведём бесплатный анализ вашего дела</li>
+      <li>Подготовим правовую позицию по вашей ситуации</li>
+    </ul>
+    <p>Если хотите ускорить процесс — позвоните нам:</p>
+    <a class="phone" href="tel:+74951798935">+7 (495) 179-89-35</a>
+    <p style="font-size:0.85rem;">Пн–Пт: 9:00–20:00 &nbsp;|&nbsp; Сб–Вс: 10:00–18:00</p>
+    <a href="/" class="btn">Вернуться на сайт</a>
+  </div>
+</body>
+</html>
