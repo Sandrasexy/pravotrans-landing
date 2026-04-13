@@ -175,7 +175,7 @@ ul { list-style: none; }
 .btn--submit { background: var(--green); color: #fff; font-size: 1.05rem; padding: 16px 56px; border-radius: 50px; border: none; cursor: pointer; font-weight: 700; transition: background .2s, transform .15s; }
 .btn--submit:hover { background: var(--green2); transform: translateY(-2px); }
 .form-consent { text-align: center; font-size: 0.78rem; color: var(--muted); margin-top: 14px; }
-.form-consent a { color: var(--gold); text-decoration: underline; }
+.form-consent a { color: #1a5ca8; text-decoration: underline; }
 .form-success { display: none; text-align: center; padding: 40px 20px; }
 .form-success__icon { font-size: 3.5rem; margin-bottom: 16px; }
 .form-success h3 { font-size: 1.4rem; font-weight: 700; color: var(--blue); margin-bottom: 10px; }
