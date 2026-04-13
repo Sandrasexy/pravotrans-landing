@@ -180,27 +180,46 @@ function validateForm() {
   return valid;
 }
 
-// ===== SEND TO TELEGRAM =====
-async function sendToTelegram(data) {
-  const text = [
-    '📋 *Новая заявка с сайта ПравоТранс*',
-    '',
-    `🏢 *Организация:* ${data.orgName}`,
-    `📍 *Адрес:* ${data.orgAddress}`,
-    `📞 *Телефон:* +7${data.phone1}`,
-    `📞 *Доп. телефон:* +7${data.phone2}`,
-    `📧 *Email:* ${data.email}`,
-    `🔢 *ИНН:* ${data.inn}`,
-    `🔢 *КПП:* ${data.kpp}`,
-    `🔢 *ОГРН:* ${data.ogrn}`,
-    `🔢 *ОКПО:* ${data.okpo}`,
-  ].join('\n');
+// ===== UTM HELPERS =====
+function getUtm(param) {
+  return new URLSearchParams(window.location.search).get(param) || '';
+}
+function makeTxId() {
+  return '10000001:' + Date.now();
+}
 
-  const url = `https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`;
-  const response = await fetch(url, {
+// ===== SEND TO TELEGRAM (Tilda-совместимый формат для AmoCRM) =====
+async function sendToTelegram(data) {
+  const params = new URLSearchParams(window.location.search);
+  const text = [
+    'Request details:',
+    `Name: ${data.name || data.orgName}`,
+    `Phone: ${data.phone}`,
+    data.orgName ? `Organization: ${data.orgName}` : '',
+    data.orgAddress ? `Address: ${data.orgAddress}` : '',
+    data.phone2 ? `Phone 2: +7${data.phone2}` : '',
+    data.email ? `Email: ${data.email}` : '',
+    data.inn ? `INN: ${data.inn}` : '',
+    data.kpp ? `KPP: ${data.kpp}` : '',
+    data.ogrn ? `OGRN: ${data.ogrn}` : '',
+    data.okpo ? `OKPO: ${data.okpo}` : '',
+    '',
+    'Additional information:',
+    `Transaction ID: ${makeTxId()}`,
+    'Block ID: rec_pravotrans_001',
+    'https://pravo-trans.ru/',
+    `UTM source: ${getUtm('utm_source')}`,
+    `UTM medium: ${getUtm('utm_medium')}`,
+    `UTM campaign: ${getUtm('utm_campaign')}`,
+    `UTM content: ${getUtm('utm_content')}`,
+    `UTM term: ${getUtm('utm_term')}`,
+    '-----',
+  ].filter(line => line !== null).join('\n');
+
+  const response = await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: TG_CHAT_ID, text, parse_mode: 'Markdown' })
+    body: JSON.stringify({ chat_id: TG_CHAT_ID, text })
   });
   return response.ok;
 }
@@ -223,9 +242,10 @@ document.getElementById('orgForm').addEventListener('submit', async function (e)
   submitBtn.textContent = 'Отправка...';
 
   const data = {
+    name:      document.getElementById('orgName').value.trim(),
+    phone:     '+7' + getPhoneDigits('phone1'),
     orgName:   document.getElementById('orgName').value.trim(),
     orgAddress: document.getElementById('orgAddress').value.trim(),
-    phone1:    getPhoneDigits('phone1'),
     phone2:    getPhoneDigits('phone2'),
     email:     document.getElementById('orgEmail').value.trim(),
     inn:       document.getElementById('inn').value.replace(/\D/g, ''),
@@ -268,12 +288,7 @@ document.getElementById('contactForm').addEventListener('submit', async function
   btn.textContent = 'Отправка...';
 
   try {
-    const text = `📞 *Заявка с сайта ПравоТранс*\n\n👤 *Имя:* ${name}\n📱 *Телефон:* +${phoneDigits}`;
-    await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: TG_CHAT_ID, text, parse_mode: 'Markdown' })
-    });
+    await sendToTelegram({ name, phone: '+' + phoneDigits });
   } catch(err) { console.warn('TG error:', err); }
 
   window.location.href = '/spasibo';
