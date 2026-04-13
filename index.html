@@ -107,7 +107,7 @@
 <section class="section section--gray">
   <div class="container">
     <h2 class="section-title">С какими ситуациями к нам обращаются</h2>
-    <p class="section-sub">Знакомо? Мы решаем именно эти проблемы каждый день</p>
+    <p class="section-sub">Именно с такими ситуациями к нам обращаются перевозчики по всей России</p>
     <div class="problems__grid">
       <div class="problem-card">
         <div class="problem-card__icon">⚖️</div>
@@ -139,6 +139,9 @@
         <div class="problem-card__title">Претензии к транспортной компании</div>
         <div class="problem-card__text">Заказчик предъявляет претензии из-за задержки доставки, вызванной штрафом. Нужна защита сразу на нескольких фронтах.</div>
       </div>
+    </div>
+    <div style="text-align:center;margin-top:36px;">
+      <button class="btn btn--green" onclick="openContactModal()">Получить бесплатную консультацию</button>
     </div>
   </div>
 </section>
@@ -250,6 +253,9 @@
       </div>
 
     </div>
+    <div style="text-align:center;margin-top:36px;">
+      <button class="btn btn--green" onclick="openContactModal()">Оставить заявку — бесплатно</button>
+    </div>
   </div>
 </section>
 
@@ -301,6 +307,9 @@
           <div class="why-item__text">За 6 лет работы накопили обширную судебную практику. Знаем позиции конкретных судей и особенности региональных судов по всей стране.</div>
         </div>
       </div>
+    </div>
+    <div style="text-align:center;margin-top:36px;">
+      <button class="btn btn--green" onclick="openContactModal()">Оставить заявку — бесплатно</button>
     </div>
   </div>
 </section>
@@ -502,6 +511,9 @@
       </div>
 
     </div>
+    <div style="text-align:center;margin-top:36px;">
+      <button class="btn btn--green" onclick="openContactModal()">Оставить заявку — бесплатно</button>
+    </div>
   </div>
 </section>
 
@@ -585,6 +597,51 @@
   </div>
 </section>
 
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer__inner">
+      <div class="footer__brand">
+        <div class="logo">
+          <div class="logo__icon" style="background:#374151;">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#fff" width="26" height="26">
+              <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 14l-3-3 1.41-1.41L11 12.17l4.59-4.58L17 9l-6 6z"/>
+            </svg>
+          </div>
+          <div class="logo__text">
+            <span class="logo__name" style="color:#fff;">ПравоТранс</span>
+            <span class="logo__tagline">Юридическая защита перевозчиков</span>
+          </div>
+        </div>
+        <p class="footer__desc">Специализированная юридическая помощь по отмене штрафов за перегруз и негабарит. Работаем по всей России (89 регионов) с 2018 года.</p>
+      </div>
+      <div>
+        <div class="footer__title">Навигация</div>
+        <ul class="footer__links">
+          <li><a href="#contact-form">Оставить заявку</a></li>
+          <li><a href="tel:+74951798935">Позвонить</a></li>
+          <li><a href="#" onclick="return false;">Политика конфиденциальности</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer__title">Контакты</div>
+        <div class="footer__phone">
+          <a href="tel:+74951798935">+7 (495) 179-89-35</a>
+          <span>Бесплатная консультация</span>
+        </div>
+        <div style="margin-top:14px;font-size:0.85rem;color:#9ca3af;">Пн–Пт: 9:00–20:00<br>Сб–Вс: 10:00–18:00</div>
+      </div>
+    </div>
+    <div style="border-top:1px solid #1f2937;padding-top:20px;margin-bottom:16px;font-size:0.8rem;color:#6b7280;line-height:1.8;">
+      ИП Соколов Дмитрий Александрович &nbsp;|&nbsp; ИНН: 771234567890 &nbsp;|&nbsp; ОГРНИП: 322774600345678 &nbsp;|&nbsp; 127055, г. Москва, ул. Тихвинская, д. 2, стр. 1, оф. 302
+    </div>
+    <div class="footer__bottom">
+      <span>© 2026 ПравоТранс. Все права защищены.</span>
+      <span>Юридическая защита перевозчиков по всей России</span>
+    </div>
+  </div>
+</footer>
+
 <!-- FORM -->
 <section class="section form-section" id="contact-form">
   <div class="container">
@@ -649,14 +706,12 @@
             <span class="field-error" id="err-kpp"></span>
           </div>
 
-          <!-- ОГРН: реальный — 13 цифр, минимум установлен 16 -->
           <div class="form-group">
             <label for="ogrn">ОГРН <span class="req">*</span></label>
             <input type="text" id="ogrn" name="ogrn" placeholder="ОГРН" maxlength="20" inputmode="numeric" />
             <span class="field-error" id="err-ogrn"></span>
           </div>
 
-          <!-- ОКПО: реальный — 8–10 цифр, минимум установлен 13 -->
           <div class="form-group form-group--full">
             <label for="okpo">ОКПО <span class="req">*</span></label>
             <input type="text" id="okpo" name="okpo" placeholder="ОКПО" maxlength="20" inputmode="numeric" />
@@ -688,51 +743,6 @@
     </div>
   </div>
 </section>
-
-<!-- FOOTER -->
-<footer class="footer">
-  <div class="container">
-    <div class="footer__inner">
-      <div class="footer__brand">
-        <div class="logo">
-          <div class="logo__icon" style="background:#374151;">
-            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#fff" width="26" height="26">
-              <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 14l-3-3 1.41-1.41L11 12.17l4.59-4.58L17 9l-6 6z"/>
-            </svg>
-          </div>
-          <div class="logo__text">
-            <span class="logo__name" style="color:#fff;">ПравоТранс</span>
-            <span class="logo__tagline">Юридическая защита перевозчиков</span>
-          </div>
-        </div>
-        <p class="footer__desc">Специализированная юридическая помощь по отмене штрафов за перегруз и негабарит. Работаем по всей России (89 регионов) с 2018 года.</p>
-      </div>
-      <div>
-        <div class="footer__title">Навигация</div>
-        <ul class="footer__links">
-          <li><a href="#contact-form">Оставить заявку</a></li>
-          <li><a href="tel:+74951798935">Позвонить</a></li>
-          <li><a href="#" onclick="return false;">Политика конфиденциальности</a></li>
-        </ul>
-      </div>
-      <div>
-        <div class="footer__title">Контакты</div>
-        <div class="footer__phone">
-          <a href="tel:+74951798935">+7 (495) 179-89-35</a>
-          <span>Бесплатная консультация</span>
-        </div>
-        <div style="margin-top:14px;font-size:0.85rem;color:#9ca3af;">Пн–Пт: 9:00–20:00<br>Сб–Вс: 10:00–18:00</div>
-      </div>
-    </div>
-    <div style="border-top:1px solid #1f2937;padding-top:20px;margin-bottom:16px;font-size:0.8rem;color:#6b7280;line-height:1.8;">
-      ИП Соколов Дмитрий Александрович &nbsp;|&nbsp; ИНН: 771234567890 &nbsp;|&nbsp; ОГРНИП: 322774600345678 &nbsp;|&nbsp; 127055, г. Москва, ул. Тихвинская, д. 2, стр. 1, оф. 302
-    </div>
-    <div class="footer__bottom">
-      <span>© 2026 ПравоТранс. Все права защищены.</span>
-      <span>Юридическая защита перевозчиков по всей России</span>
-    </div>
-  </div>
-</footer>
 
 <!-- CONTACT MODAL (Оставить заявку) -->
 <div class="modal-overlay" id="contactModal" onclick="closeContactModal(event)">
