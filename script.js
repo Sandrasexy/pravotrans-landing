@@ -206,7 +206,6 @@ async function sendToTelegram(data) {
     '',
     'Additional information:',
     `Transaction ID: ${makeTxId()}`,
-    'Block ID: rec_pravotrans_001',
     'https://pravo-trans.ru/',
     `UTM source: ${getUtm('utm_source')}`,
     `UTM medium: ${getUtm('utm_medium')}`,
