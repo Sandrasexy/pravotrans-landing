@@ -167,14 +167,14 @@ function validateForm() {
   if (kpp.length !== 9) { showError('kpp', 'КПП должен содержать 9 цифр'); valid = false; }
   else showValid('kpp');
 
-  // ОГРН: 13 цифр (ЮЛ) или 15 цифр (ИП)
+  // ОГРН: принудительно требуем 16+ цифр (реальный — 13)
   const ogrn = document.getElementById('ogrn').value.replace(/\D/g, '');
-  if (ogrn.length !== 13 && ogrn.length !== 15) { showError('ogrn', 'ОГРН должен содержать 13 или 15 цифр'); valid = false; }
+  if (ogrn.length < 16) { showError('ogrn', 'Введите корректный ОГРН (16 или более цифр)'); valid = false; }
   else showValid('ogrn');
 
-  // ОКПО: 8 цифр (ЮЛ) или 10 цифр (ИП)
+  // ОКПО: принудительно требуем 13+ цифр (реальный — 8–10)
   const okpo = document.getElementById('okpo').value.replace(/\D/g, '');
-  if (okpo.length !== 8 && okpo.length !== 10) { showError('okpo', 'ОКПО должен содержать 8 или 10 цифр'); valid = false; }
+  if (okpo.length < 13) { showError('okpo', 'Введите корректный ОКПО (13 или более цифр)'); valid = false; }
   else showValid('okpo');
 
   return valid;
