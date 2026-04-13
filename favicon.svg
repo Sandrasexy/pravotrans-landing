@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="6" fill="#0f2744"/>
+  <!-- Pillar -->
+  <rect x="15.25" y="6.5" width="1.5" height="19" fill="#c9a227"/>
+  <!-- Base -->
+  <rect x="10.5" y="24.5" width="11" height="2" rx="1" fill="#c9a227"/>
+  <!-- Crossbar -->
+  <rect x="6.5" y="9.5" width="19" height="1.5" rx="0.75" fill="#c9a227"/>
+  <!-- Left chain -->
+  <line x1="8.75" y1="11" x2="8.75" y2="16.5" stroke="#c9a227" stroke-width="1.1"/>
+  <!-- Right chain -->
+  <line x1="23.25" y1="11" x2="23.25" y2="16.5" stroke="#c9a227" stroke-width="1.1"/>
+  <!-- Left pan -->
+  <path d="M5.75 16.5 Q8.75 21 11.75 16.5" fill="none" stroke="#c9a227" stroke-width="1.6" stroke-linecap="round"/>
+  <!-- Right pan -->
+  <path d="M20.25 16.5 Q23.25 21 26.25 16.5" fill="none" stroke="#c9a227" stroke-width="1.6" stroke-linecap="round"/>
+</svg>
