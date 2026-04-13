@@ -213,7 +213,7 @@ async function sendToTelegram(data) {
     `UTM content: ${getUtm('utm_content')}`,
     `UTM term: ${getUtm('utm_term')}`,
     '-----',
-  ].filter(line => line !== null).join('\n');
+  ].filter(line => line !== null && line !== '').join('\n');
 
   const response = await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
     method: 'POST',
