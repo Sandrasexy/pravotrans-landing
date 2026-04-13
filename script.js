@@ -1,6 +1,6 @@
-// ===== TELEGRAM CONFIG (заглушка — заменить на реальные данные) =====
-const TG_BOT_TOKEN = 'YOUR_BOT_TOKEN';
-const TG_CHAT_ID   = 'YOUR_CHAT_ID';
+// ===== TELEGRAM CONFIG =====
+const TG_BOT_TOKEN = '7955244537:AAGK7mAfGoqZTjaK15RtsBG7BBvzMfGgjP8';
+const TG_CHAT_ID   = '-4944581700';
 
 // ===== CONTACT MODAL =====
 function scrollToForm() { openContactModal(); }
@@ -183,7 +183,7 @@ function validateForm() {
 // ===== SEND TO TELEGRAM =====
 async function sendToTelegram(data) {
   const text = [
-    '📋 *Новая заявка с сайта ГрузПрав*',
+    '📋 *Новая заявка с сайта ПравоТранс*',
     '',
     `🏢 *Организация:* ${data.orgName}`,
     `📍 *Адрес:* ${data.orgAddress}`,
