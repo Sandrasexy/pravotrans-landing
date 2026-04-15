@@ -42,9 +42,9 @@
   </div>
 
 <!-- Cookie banner -->
-<div id="cookieBanner" style="position:fixed;bottom:20px;right:20px;z-index:9999;background:#fff;border:1px solid #d5dde8;border-radius:8px;padding:16px 20px;max-width:300px;box-shadow:0 4px 20px rgba(0,0,0,.1);">
-  <p style="font-size:13px;color:#6b7280;margin:0 0 12px;line-height:1.6;">Мы используем файлы cookie для аналитики. <a href="/privacy.html" style="color:#2356a0;">Подробнее</a></p>
-  <button onclick="gaOk()" style="background:#2356a0;color:#fff;border:none;padding:7px 16px;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Принять</button>
+<div id="cookieBanner" style="position:fixed;bottom:0;left:0;right:0;z-index:9999;background:rgba(237,239,242,.96);border-top:1px solid #d5dde8;padding:7px 16px;display:flex;align-items:center;gap:12px;">
+  <span style="color:#aab0bb;font-size:12px;flex:1;">Используем куки, делая сайт удобнее. <a href="/privacy.html" style="color:#8a95a3;text-decoration:underline;">Подробнее</a></span>
+  <button onclick="gaOk()" style="background:#1a3d6b;color:#fff;border:none;padding:3px 12px;border-radius:3px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;flex-shrink:0;">OK</button>
 </div>
 <script>(function(){if(localStorage.getItem('ck_ok'))document.getElementById('cookieBanner').style.display='none'})();function gaOk(){localStorage.setItem('ck_ok','1');document.getElementById('cookieBanner').style.display='none'}</script>
 <!-- /Cookie banner -->
