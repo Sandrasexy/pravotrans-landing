@@ -102,5 +102,13 @@
   <h2>9. Изменения Политики</h2>
   <p>Оператор оставляет за собой право вносить изменения в настоящую Политику. Новая редакция вступает в силу с момента её размещения на Сайте. Рекомендуем периодически проверять данную страницу.</p>
 </div>
+
+<!-- Cookie banner -->
+<div id="cookieBanner" style="position:fixed;bottom:20px;right:20px;z-index:9999;background:#fff;border:1px solid #d5dde8;border-radius:8px;padding:16px 20px;max-width:300px;box-shadow:0 4px 20px rgba(0,0,0,.1);">
+  <p style="font-size:13px;color:#6b7280;margin:0 0 12px;line-height:1.6;">Мы используем файлы cookie для аналитики. <a href="/privacy.html" style="color:#2356a0;">Подробнее</a></p>
+  <button onclick="gaOk()" style="background:#2356a0;color:#fff;border:none;padding:7px 16px;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Принять</button>
+</div>
+<script>(function(){if(localStorage.getItem('ck_ok'))document.getElementById('cookieBanner').style.display='none'})();function gaOk(){localStorage.setItem('ck_ok','1');document.getElementById('cookieBanner').style.display='none'}</script>
+<!-- /Cookie banner -->
 </body>
 </html>
