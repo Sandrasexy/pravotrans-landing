@@ -21,15 +21,18 @@ $to1       = 'otmenim@yandex.ru';
 $to2       = 'pr@topinweb.ru';
 $subject   = 'Новая заявка - перегруз, негабарит';
 
-$ok1 = smtp_send($smtp_host, $smtp_port, $smtp_user, $smtp_pass,
-                 $from, $from_name, $to1, $subject, $text);
-$ok2 = smtp_send($smtp_host, $smtp_port, $smtp_user, $smtp_pass,
-                 $from, $from_name, $to2, $subject, $text);
-echo json_encode(['ok' => $ok1 && $ok2]);
+$err1 = $err2 = '';
+$ok1 = smtp_send($smtp_host, $smtp_port, $smtp_user, $smtp_pass, $from, $from_name, $to1, $subject, $text, $err1);
+$ok2 = smtp_send($smtp_host, $smtp_port, $smtp_user, $smtp_pass, $from, $from_name, $to2, $subject, $text, $err2);
 
-function smtp_send($host, $port, $user, $pass, $from, $from_name, $to, $subject, $body) {
+$log = date('Y-m-d H:i:s') . " ok1=$ok1 err1=$err1 | ok2=$ok2 err2=$err2\n";
+file_put_contents(__DIR__ . '/mail.log', $log, FILE_APPEND);
+
+echo json_encode(['ok' => $ok1 && $ok2, 'e1' => $err1, 'e2' => $err2]);
+
+function smtp_send($host, $port, $user, $pass, $from, $from_name, $to, $subject, $body, &$err) {
     $socket = @fsockopen("ssl://$host", $port, $errno, $errstr, 15);
-    if (!$socket) return false;
+    if (!$socket) { $err = "connect:[$errno]$errstr"; return false; }
 
     $r = function() use ($socket) { return fgets($socket, 512); };
     $w = function($s) use ($socket) { fputs($socket, $s . "\r\n"); };
@@ -37,7 +40,7 @@ function smtp_send($host, $port, $user, $pass, $from, $from_name, $to, $subject,
     $r(); // greeting
 
     $w('EHLO ' . (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost'));
-    while ($l = $r()) { if ($l[3] === ' ') break; }
+    while ($l = $r()) { if (isset($l[3]) && $l[3] === ' ') break; }
 
     $w('AUTH LOGIN');
     $r();
@@ -45,12 +48,13 @@ function smtp_send($host, $port, $user, $pass, $from, $from_name, $to, $subject,
     $r();
     $w(base64_encode($pass));
     $auth = $r();
-    if (substr($auth, 0, 3) !== '235') { fclose($socket); return false; }
+    if (substr($auth, 0, 3) !== '235') { $err = "auth:" . trim($auth); fclose($socket); return false; }
 
     $w("MAIL FROM: <$from>");
     $r();
     $w("RCPT TO: <$to>");
-    $r();
+    $rcpt = $r();
+    if (substr($rcpt, 0, 3) !== '250') { $err = "rcpt:" . trim($rcpt); fclose($socket); return false; }
 
     $w('DATA');
     $r();
@@ -72,5 +76,6 @@ function smtp_send($host, $port, $user, $pass, $from, $from_name, $to, $subject,
     $w('QUIT');
     fclose($socket);
 
-    return substr($resp, 0, 3) === '250';
+    if (substr($resp, 0, 3) !== '250') { $err = "data:" . trim($resp); return false; }
+    return true;
 }
