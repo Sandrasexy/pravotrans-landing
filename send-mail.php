@@ -11,7 +11,7 @@ $text = isset($d['text']) ? strip_tags($d['text']) : '';
 if (!$text) { echo json_encode(['ok' => false, 'err' => 'empty']); exit; }
 
 $to      = 'otmenim@yandex.ru';
-$subject = 'Новая заявка — pravo-trans.ru';
+$subject = 'Новая заявка - перегруз, негабарит';
 $headers = "MIME-Version: 1.0\r\n"
          . "Content-Type: text/plain; charset=UTF-8\r\n"
          . "From: no-reply@pravo-trans.ru\r\n"
