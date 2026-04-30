@@ -10,7 +10,7 @@ $d    = json_decode($raw, true);
 $text = isset($d['text']) ? strip_tags($d['text']) : '';
 if (!$text) { echo json_encode(['ok' => false, 'err' => 'empty']); exit; }
 
-$smtp_host = 'mail.beget.com';
+$smtp_host = 'smtp.beget.com';
 $smtp_port = 465;
 $smtp_user = 'peregruzmail@tiwmail.ru';
 $smtp_pass = 'A1yZCqanS!0J';
