@@ -10,25 +10,22 @@ $d    = json_decode($raw, true);
 $text = isset($d['text']) ? strip_tags($d['text']) : '';
 if (!$text) { echo json_encode(['ok' => false, 'err' => 'empty']); exit; }
 
-// SMTP config
 $smtp_host = 'mail.beget.com';
 $smtp_port = 465;
 $smtp_user = 'peregruzmail@tiwmail.ru';
 $smtp_pass = 'A1yZCqanS!0J';
 $from      = 'peregruzmail@tiwmail.ru';
 $from_name = 'pravo-trans.ru — заявка с сайта';
-$to1       = 'otmenim@yandex.ru';
-$to2       = 'pr@topinweb.ru';
+$to        = ['otmenim@yandex.ru', 'pr@topinweb.ru'];
 $subject   = 'Новая заявка - перегруз, негабарит';
 
-$err1 = $err2 = '';
-$ok1 = smtp_send($smtp_host, $smtp_port, $smtp_user, $smtp_pass, $from, $from_name, $to1, $subject, $text, $err1);
-$ok2 = smtp_send($smtp_host, $smtp_port, $smtp_user, $smtp_pass, $from, $from_name, $to2, $subject, $text, $err2);
+$err = '';
+$ok  = smtp_send($smtp_host, $smtp_port, $smtp_user, $smtp_pass, $from, $from_name, $to, $subject, $text, $err);
 
-$log = date('Y-m-d H:i:s') . " ok1=$ok1 err1=$err1 | ok2=$ok2 err2=$err2\n";
+$log = date('Y-m-d H:i:s') . " ok=$ok err=$err\n";
 file_put_contents(__DIR__ . '/mail.log', $log, FILE_APPEND);
 
-echo json_encode(['ok' => $ok1 && $ok2, 'e1' => $err1, 'e2' => $err2]);
+echo json_encode(['ok' => $ok, 'e' => $err]);
 
 function smtp_send($host, $port, $user, $pass, $from, $from_name, $to, $subject, $body, &$err) {
     $socket = @fsockopen("ssl://$host", $port, $errno, $errstr, 15);
@@ -52,16 +49,19 @@ function smtp_send($host, $port, $user, $pass, $from, $from_name, $to, $subject,
 
     $w("MAIL FROM: <$from>");
     $r();
-    $w("RCPT TO: <$to>");
-    $rcpt = $r();
-    if (substr($rcpt, 0, 3) !== '250') { $err = "rcpt:" . trim($rcpt); fclose($socket); return false; }
+
+    foreach ((array)$to as $addr) {
+        $w("RCPT TO: <$addr>");
+        $rcpt = $r();
+        if (substr($rcpt, 0, 3) !== '250') { $err = "rcpt<$addr>:" . trim($rcpt); fclose($socket); return false; }
+    }
 
     $w('DATA');
     $r();
 
     $enc_subj = '=?UTF-8?B?' . base64_encode($subject) . '?=';
     $msg = "From: =?UTF-8?B?" . base64_encode($from_name) . "?= <$from>\r\n"
-         . "To: $to\r\n"
+         . "To: " . (is_array($to) ? implode(', ', $to) : $to) . "\r\n"
          . "Subject: $enc_subj\r\n"
          . "MIME-Version: 1.0\r\n"
          . "Content-Type: text/plain; charset=UTF-8\r\n"
