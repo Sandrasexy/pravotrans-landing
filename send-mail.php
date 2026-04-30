@@ -17,15 +17,17 @@ $smtp_user = 'peregruzmail@tiwmail.ru';
 $smtp_pass = 'A1yZCqanS!0J';
 $from      = 'peregruzmail@tiwmail.ru';
 $from_name = 'pravo-trans.ru — заявка с сайта';
-$to        = 'otmenim@yandex.ru';
-$cc        = 'pr@topinweb.ru';
+$to1       = 'otmenim@yandex.ru';
+$to2       = 'pr@topinweb.ru';
 $subject   = 'Новая заявка - перегруз, негабарит';
 
-$ok = smtp_send($smtp_host, $smtp_port, $smtp_user, $smtp_pass,
-                $from, $from_name, $to, $cc, $subject, $text);
-echo json_encode(['ok' => $ok]);
+$ok1 = smtp_send($smtp_host, $smtp_port, $smtp_user, $smtp_pass,
+                 $from, $from_name, $to1, $subject, $text);
+$ok2 = smtp_send($smtp_host, $smtp_port, $smtp_user, $smtp_pass,
+                 $from, $from_name, $to2, $subject, $text);
+echo json_encode(['ok' => $ok1 && $ok2]);
 
-function smtp_send($host, $port, $user, $pass, $from, $from_name, $to, $cc, $subject, $body) {
+function smtp_send($host, $port, $user, $pass, $from, $from_name, $to, $subject, $body) {
     $socket = @fsockopen("ssl://$host", $port, $errno, $errstr, 15);
     if (!$socket) return false;
 
@@ -49,8 +51,6 @@ function smtp_send($host, $port, $user, $pass, $from, $from_name, $to, $cc, $sub
     $r();
     $w("RCPT TO: <$to>");
     $r();
-    $w("RCPT TO: <$cc>");
-    $r();
 
     $w('DATA');
     $r();
@@ -58,7 +58,6 @@ function smtp_send($host, $port, $user, $pass, $from, $from_name, $to, $cc, $sub
     $enc_subj = '=?UTF-8?B?' . base64_encode($subject) . '?=';
     $msg = "From: =?UTF-8?B?" . base64_encode($from_name) . "?= <$from>\r\n"
          . "To: $to\r\n"
-         . "Cc: $cc\r\n"
          . "Subject: $enc_subj\r\n"
          . "MIME-Version: 1.0\r\n"
          . "Content-Type: text/plain; charset=UTF-8\r\n"
