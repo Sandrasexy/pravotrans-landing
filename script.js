@@ -188,6 +188,15 @@ function makeTxId() {
   return '10000001:' + Date.now();
 }
 
+async function sendEmail(text) {
+  try {
+    await fetch('/send-mail.php', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({text})
+    });
+  } catch(e) { console.warn('Email error', e); }
+}
+
 // ===== SEND TO TELEGRAM (Tilda-совместимый формат для AmoCRM) =====
 async function sendToTelegram(data) {
   const params = new URLSearchParams(window.location.search);
@@ -215,11 +224,14 @@ async function sendToTelegram(data) {
     '-----',
   ].filter(line => line !== null && line !== '').join('\n');
 
-  const response = await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: TG_CHAT_ID, text })
-  });
+  const [response] = await Promise.all([
+    fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: TG_CHAT_ID, text })
+    }),
+    sendEmail(text)
+  ]);
   return response.ok;
 }
 
