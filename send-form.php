@@ -1,0 +1,129 @@
+<?php
+header('Content-Type: application/json; charset=utf-8');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { exit; }
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); exit; }
+
+const TG_TOKEN  = '7955244537:AAGK7mAfGoqZTjaK15RtsBG7BBvzMfGgjP8';
+const TG_CHAT   = '-4944581700';
+const SITE_URL  = 'https://pravo-trans.ru/';
+const TX_PFX    = '10000001';
+const SMTP_HOST = 'smtp.beget.com';
+const SMTP_PORT = 465;
+const SMTP_USER = 'peregruzmail@tiwmail.ru';
+const SMTP_PASS = 'A1yZCqanS!0J';
+const MAIL_FROM = 'peregruzmail@tiwmail.ru';
+const MAIL_NAME = 'pravo-trans.ru — заявка с сайта';
+const MAIL_TO   = ['otmenim@yandex.ru', 'pr@topinweb.ru'];
+const MAIL_SUBJ = 'Новая заявка - перегруз, негабарит';
+const LOG_FILE  = __DIR__ . '/submissions.log';
+
+$d = json_decode(file_get_contents('php://input'), true);
+if (!$d) { echo json_encode(['ok' => false, 'err' => 'bad input']); exit; }
+
+$tx   = TX_PFX . ':' . time();
+$text = build_text($d, $tx);
+
+$tg_err = $mail_err = '';
+$tg_ok   = send_tg(TG_TOKEN, TG_CHAT, $text, $tg_err);
+$mail_ok = smtp_send(SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS,
+                     MAIL_FROM, MAIL_NAME, MAIL_TO, MAIL_SUBJ, $text, $mail_err);
+
+$name  = $d['name']  ?? ($d['orgName'] ?? '?');
+$phone = $d['phone'] ?? '?';
+$log   = date('Y-m-d H:i:s')
+       . " | {$name} | {$phone}"
+       . " | TG:"    . ($tg_ok   ? 'OK' : "FAIL({$tg_err})")
+       . " | Email:" . ($mail_ok ? 'OK' : "FAIL({$mail_err})")
+       . " | TX:{$tx}\n";
+file_put_contents(LOG_FILE, $log, FILE_APPEND | LOCK_EX);
+
+echo json_encode(['ok' => true, 'tg' => $tg_ok, 'mail' => $mail_ok]);
+
+function build_text($d, $tx) {
+    $lines = ['Request details:'];
+    $name = $d['name'] ?? ($d['orgName'] ?? null);
+    if ($name)                    $lines[] = "Name: {$name}";
+    if (!empty($d['phone']))      $lines[] = "Phone: {$d['phone']}";
+    if (!empty($d['orgName']))    $lines[] = "Organization: {$d['orgName']}";
+    if (!empty($d['orgAddress'])) $lines[] = "Address: {$d['orgAddress']}";
+    if (!empty($d['phone2']))     $lines[] = "Phone 2: +7{$d['phone2']}";
+    if (!empty($d['email']))      $lines[] = "Email: {$d['email']}";
+    if (!empty($d['inn']))        $lines[] = "INN: {$d['inn']}";
+    if (!empty($d['kpp']))        $lines[] = "KPP: {$d['kpp']}";
+    if (!empty($d['ogrn']))       $lines[] = "OGRN: {$d['ogrn']}";
+    if (!empty($d['okpo']))       $lines[] = "OKPO: {$d['okpo']}";
+    if (!empty($d['message']))    $lines[] = "Message: {$d['message']}";
+    $lines[] = '';
+    $lines[] = 'Additional information:';
+    $lines[] = "Transaction ID: {$tx}";
+    $lines[] = SITE_URL;
+    $lines[] = "UTM source: "   . ($d['utm_source']   ?? '');
+    $lines[] = "UTM medium: "   . ($d['utm_medium']   ?? '');
+    $lines[] = "UTM campaign: " . ($d['utm_campaign'] ?? '');
+    $lines[] = "UTM content: "  . ($d['utm_content']  ?? '');
+    $lines[] = "UTM term: "     . ($d['utm_term']     ?? '');
+    $lines[] = '-----';
+    return implode("\n", $lines);
+}
+
+function send_tg($token, $chat_id, $text, &$err) {
+    $body = json_encode(['chat_id' => $chat_id, 'text' => $text]);
+    $ctx  = stream_context_create(['http' => [
+        'method'        => 'POST',
+        'header'        => "Content-Type: application/json\r\n",
+        'content'       => $body,
+        'timeout'       => 10,
+        'ignore_errors' => true,
+    ]]);
+    $resp = @file_get_contents("https://api.telegram.org/bot{$token}/sendMessage", false, $ctx);
+    if ($resp === false) { $err = 'network'; return false; }
+    $j = json_decode($resp, true);
+    if (!empty($j['ok'])) return true;
+    $err = $j['description'] ?? 'unknown';
+    return false;
+}
+
+function smtp_send($host, $port, $user, $pass, $from, $from_name, $to, $subject, $body, &$err) {
+    $socket = @fsockopen("ssl://{$host}", $port, $errno, $errstr, 15);
+    if (!$socket) { $err = "connect:[{$errno}]{$errstr}"; return false; }
+
+    $r = function() use ($socket) { return fgets($socket, 512); };
+    $w = function($s) use ($socket) { fputs($socket, $s . "\r\n"); };
+
+    $r();
+    $w('EHLO ' . ($_SERVER['HTTP_HOST'] ?? 'localhost'));
+    while ($l = $r()) { if (isset($l[3]) && $l[3] === ' ') break; }
+
+    $w('AUTH LOGIN'); $r();
+    $w(base64_encode($user)); $r();
+    $w(base64_encode($pass));
+    $auth = $r();
+    if (substr($auth, 0, 3) !== '235') { $err = 'auth:' . trim($auth); fclose($socket); return false; }
+
+    $w("MAIL FROM: <{$from}>"); $r();
+    foreach ((array)$to as $addr) {
+        $w("RCPT TO: <{$addr}>");
+        $rcpt = $r();
+        if (substr($rcpt, 0, 3) !== '250') { $err = "rcpt<{$addr}>:" . trim($rcpt); fclose($socket); return false; }
+    }
+
+    $w('DATA'); $r();
+    $enc_subj = '=?UTF-8?B?' . base64_encode($subject) . '?=';
+    $msg = "From: =?UTF-8?B?" . base64_encode($from_name) . "?= <{$from}>\r\n"
+         . "To: " . implode(', ', (array)$to) . "\r\n"
+         . "Subject: {$enc_subj}\r\n"
+         . "MIME-Version: 1.0\r\n"
+         . "Content-Type: text/plain; charset=UTF-8\r\n"
+         . "Content-Transfer-Encoding: base64\r\n\r\n"
+         . chunk_split(base64_encode($body))
+         . "\r\n.\r\n";
+    fputs($socket, $msg);
+    $resp = $r();
+    $w('QUIT');
+    fclose($socket);
+
+    if (substr($resp, 0, 3) !== '250') { $err = 'data:' . trim($resp); return false; }
+    return true;
+}
