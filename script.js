@@ -1,6 +1,18 @@
-// ===== TELEGRAM CONFIG =====
-const TG_BOT_TOKEN = '7955244537:AAGK7mAfGoqZTjaK15RtsBG7BBvzMfGgjP8';
-const TG_CHAT_ID   = '-4944581700';
+// ===== SUBMIT TO SERVER =====
+async function submitForm(data) {
+  const p = new URLSearchParams(window.location.search);
+  data.utm_source   = p.get('utm_source')   || '';
+  data.utm_medium   = p.get('utm_medium')   || '';
+  data.utm_campaign = p.get('utm_campaign') || '';
+  data.utm_content  = p.get('utm_content')  || '';
+  data.utm_term     = p.get('utm_term')     || '';
+  try {
+    await fetch('/send-form.php', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data)
+    });
+  } catch(e) { console.warn('Submit error', e); }
+}
 
 // ===== CONTACT MODAL =====
 function scrollToForm() { openContactModal(); }
@@ -64,7 +76,7 @@ applyPhoneMask(document.getElementById('phone2'));
     return r;
   }
   input.addEventListener('focus', function() { if (!this.value) this.value = '+7 '; });
-  input.addEventListener('input', function() { const pos = this.selectionStart; this.value = format(this.value); });
+  input.addEventListener('input', function() { this.value = format(this.value); });
   input.addEventListener('keydown', function(e) {
     if ((e.key === 'Backspace' || e.key === 'Delete') && this.value.replace(/\D/g,'').length <= 1) {
       e.preventDefault(); this.value = '+7 ';
@@ -127,52 +139,41 @@ function getPhoneDigits(id) {
 }
 
 // ===== VALIDATION RULES =====
-// ОГРН: реально 13 цифр, минимум принудительно 16
-// ОКПО: реально 8–10 цифр, минимум принудительно 13
 function validateForm() {
   let valid = true;
 
-  // Наименование
   const orgName = document.getElementById('orgName').value.trim();
   if (!orgName) { showError('orgName', 'Укажите наименование организации'); valid = false; }
   else showValid('orgName');
 
-  // Адрес
   const orgAddress = document.getElementById('orgAddress').value.trim();
   if (!orgAddress) { showError('orgAddress', 'Укажите адрес организации'); valid = false; }
   else showValid('orgAddress');
 
-  // Телефон 1
   const p1 = getPhoneDigits('phone1');
   if (p1.length < 10) { showPhoneError('phoneWrap1', 'phone1', 'Введите полный номер телефона'); valid = false; }
   else showPhoneValid('phoneWrap1', 'phone1');
 
-  // Телефон 2
   const p2 = getPhoneDigits('phone2');
   if (p2.length < 10) { showPhoneError('phoneWrap2', 'phone2', 'Введите полный номер телефона'); valid = false; }
   else showPhoneValid('phoneWrap2', 'phone2');
 
-  // Email
   const email = document.getElementById('orgEmail').value.trim();
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showError('orgEmail', 'Введите корректный Email'); valid = false; }
   else showValid('orgEmail');
 
-  // ИНН: 10 или 12 цифр
   const inn = document.getElementById('inn').value.replace(/\D/g, '');
   if (inn.length !== 10 && inn.length !== 12) { showError('inn', 'ИНН должен содержать 10 или 12 цифр'); valid = false; }
   else showValid('inn');
 
-  // КПП: 9 цифр
   const kpp = document.getElementById('kpp').value.replace(/\D/g, '');
   if (kpp.length !== 9) { showError('kpp', 'КПП должен содержать 9 цифр'); valid = false; }
   else showValid('kpp');
 
-  // ОГРН: принудительно требуем 16+ цифр (реальный — 13)
   const ogrn = document.getElementById('ogrn').value.replace(/\D/g, '');
   if (ogrn.length < 16) { showError('ogrn', 'Введите корректный ОГРН (16 или более цифр)'); valid = false; }
   else showValid('ogrn');
 
-  // ОКПО: принудительно требуем 13+ цифр (реальный — 8–10)
   const okpo = document.getElementById('okpo').value.replace(/\D/g, '');
   if (okpo.length < 13) { showError('okpo', 'Введите корректный ОКПО (13 или более цифр)'); valid = false; }
   else showValid('okpo');
@@ -180,66 +181,10 @@ function validateForm() {
   return valid;
 }
 
-// ===== UTM HELPERS =====
-function getUtm(param) {
-  return new URLSearchParams(window.location.search).get(param) || '';
-}
-function makeTxId() {
-  return '10000001:' + Date.now();
-}
-
-async function sendEmail(text) {
-  try {
-    await fetch('/send-mail.php', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({text})
-    });
-  } catch(e) { console.warn('Email error', e); }
-}
-
-// ===== SEND TO TELEGRAM (Tilda-совместимый формат для AmoCRM) =====
-async function sendToTelegram(data) {
-  const params = new URLSearchParams(window.location.search);
-  const text = [
-    'Request details:',
-    `Name: ${data.name || data.orgName}`,
-    `Phone: ${data.phone}`,
-    data.orgName ? `Organization: ${data.orgName}` : '',
-    data.orgAddress ? `Address: ${data.orgAddress}` : '',
-    data.phone2 ? `Phone 2: +7${data.phone2}` : '',
-    data.email ? `Email: ${data.email}` : '',
-    data.inn ? `INN: ${data.inn}` : '',
-    data.kpp ? `KPP: ${data.kpp}` : '',
-    data.ogrn ? `OGRN: ${data.ogrn}` : '',
-    data.okpo ? `OKPO: ${data.okpo}` : '',
-    '',
-    'Additional information:',
-    `Transaction ID: ${makeTxId()}`,
-    'https://pravo-trans.ru/',
-    `UTM source: ${getUtm('utm_source')}`,
-    `UTM medium: ${getUtm('utm_medium')}`,
-    `UTM campaign: ${getUtm('utm_campaign')}`,
-    `UTM content: ${getUtm('utm_content')}`,
-    `UTM term: ${getUtm('utm_term')}`,
-    '-----',
-  ].filter(line => line !== null && line !== '').join('\n');
-
-  const [response] = await Promise.all([
-    fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: TG_CHAT_ID, text })
-    }),
-    sendEmail(text)
-  ]);
-  return response.ok;
-}
-
 // ===== FORM SUBMIT =====
 document.getElementById('orgForm').addEventListener('submit', async function (e) {
   e.preventDefault();
 
-  // Сброс состояний
   ['orgName','orgAddress','orgEmail','inn','kpp','ogrn','okpo'].forEach(clearState);
   ['phoneWrap1','phoneWrap2'].forEach(id => {
     const w = document.getElementById(id);
@@ -252,26 +197,20 @@ document.getElementById('orgForm').addEventListener('submit', async function (e)
   submitBtn.disabled = true;
   submitBtn.textContent = 'Отправка...';
 
-  const data = {
-    name:      document.getElementById('orgName').value.trim(),
-    phone:     '+7' + getPhoneDigits('phone1'),
-    orgName:   document.getElementById('orgName').value.trim(),
+  const orgName = document.getElementById('orgName').value.trim();
+  await submitForm({
+    name:       orgName,
+    orgName:    orgName,
     orgAddress: document.getElementById('orgAddress').value.trim(),
-    phone2:    getPhoneDigits('phone2'),
-    email:     document.getElementById('orgEmail').value.trim(),
-    inn:       document.getElementById('inn').value.replace(/\D/g, ''),
-    kpp:       document.getElementById('kpp').value.replace(/\D/g, ''),
-    ogrn:      document.getElementById('ogrn').value.replace(/\D/g, ''),
-    okpo:      document.getElementById('okpo').value.replace(/\D/g, ''),
-  };
+    phone:      '+7' + getPhoneDigits('phone1'),
+    phone2:     getPhoneDigits('phone2'),
+    email:      document.getElementById('orgEmail').value.trim(),
+    inn:        document.getElementById('inn').value.replace(/\D/g, ''),
+    kpp:        document.getElementById('kpp').value.replace(/\D/g, ''),
+    ogrn:       document.getElementById('ogrn').value.replace(/\D/g, ''),
+    okpo:       document.getElementById('okpo').value.replace(/\D/g, ''),
+  });
 
-  try {
-    await sendToTelegram(data);
-  } catch (err) {
-    console.warn('Telegram send failed:', err);
-  }
-
-  // Редирект на страницу благодарности
   window.location.href = '/thanks3';
 });
 
@@ -298,10 +237,7 @@ document.getElementById('contactForm').addEventListener('submit', async function
   btn.disabled = true;
   btn.textContent = 'Отправка...';
 
-  try {
-    await sendToTelegram({ name, phone: '+' + phoneDigits });
-  } catch(err) { console.warn('TG error:', err); }
-
+  await submitForm({ name, phone: '+' + phoneDigits });
   window.location.href = '/spasibo';
 });
 
@@ -312,13 +248,11 @@ function openLetterModal(el) {
   const content = document.getElementById('lbContent');
 
   if (imgSrc) {
-    // Try to show image; fallback to HTML if image fails to load
     const img = document.createElement('img');
     img.src = imgSrc;
     img.alt = 'Благодарственное письмо';
     img.style.cssText = 'width:100%;border-radius:4px;display:block;';
     img.onerror = function() {
-      // Image not found — show HTML content instead
       const clone = el.cloneNode(true);
       clone.classList.add('lb-clone');
       clone.style.cssText = 'cursor:default;transform:none;box-shadow:none;';
