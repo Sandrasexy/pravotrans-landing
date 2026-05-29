@@ -5,10 +5,6 @@ header('Access-Control-Allow-Methods: POST, OPTIONS');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { exit; }
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); exit; }
 
-const TG_TOKEN  = '7955244537:AAGK7mAfGoqZTjaK15RtsBG7BBvzMfGgjP8';
-const TG_CHAT   = '-4944581700';
-const SITE_URL  = 'https://pravo-trans.ru/';
-const TX_PFX    = '10000001';
 const SMTP_HOST = 'smtp.beget.com';
 const SMTP_PORT = 465;
 const SMTP_USER = 'peregruzmail@tiwmail.ru';
@@ -20,28 +16,38 @@ const MAIL_SUBJ = 'Новая заявка - перегруз, негабари�
 const LOG_FILE  = __DIR__ . '/submissions.log';
 
 $d = json_decode(file_get_contents('php://input'), true);
-if (!$d) { echo json_encode(['ok' => false, 'err' => 'bad input']); exit; }
+if (!$d) { echo json_encode(['ok' => false]); exit; }
 
-$tx   = TX_PFX . ':' . time();
-$text = build_text($d, $tx);
+// Отвечаем браузеру немедленно, не дожидаясь отправки
+$response = json_encode(['ok' => true]);
+header('Content-Length: ' . strlen($response));
+header('Connection: close');
+echo $response;
+if (function_exists('fastcgi_finish_request')) {
+    fastcgi_finish_request();
+} else {
+    ob_end_flush();
+    flush();
+}
+ignore_user_abort(true);
+set_time_limit(60);
 
-$tg_err = $mail_err = '';
-$tg_ok   = send_tg(TG_TOKEN, TG_CHAT, $text, $tg_err);
-$mail_ok = smtp_send(SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS,
-                     MAIL_FROM, MAIL_NAME, MAIL_TO, MAIL_SUBJ, $text, $mail_err);
+// Фоновая обработка: email
+$tx       = '10000001:' . time();
+$text     = build_text($d, $tx, 'https://pravo-trans.ru/');
+$mail_err = '';
+$mail_ok  = smtp_send(SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS,
+                      MAIL_FROM, MAIL_NAME, MAIL_TO, MAIL_SUBJ, $text, $mail_err);
 
 $name  = $d['name']  ?? ($d['orgName'] ?? '?');
 $phone = $d['phone'] ?? '?';
 $log   = date('Y-m-d H:i:s')
        . " | {$name} | {$phone}"
-       . " | TG:"    . ($tg_ok   ? 'OK' : "FAIL({$tg_err})")
        . " | Email:" . ($mail_ok ? 'OK' : "FAIL({$mail_err})")
        . " | TX:{$tx}\n";
 file_put_contents(LOG_FILE, $log, FILE_APPEND | LOCK_EX);
 
-echo json_encode(['ok' => true, 'tg' => $tg_ok, 'mail' => $mail_ok]);
-
-function build_text($d, $tx) {
+function build_text($d, $tx, $site) {
     $lines = ['Request details:'];
     $name = $d['name'] ?? ($d['orgName'] ?? null);
     if ($name)                    $lines[] = "Name: {$name}";
@@ -58,7 +64,7 @@ function build_text($d, $tx) {
     $lines[] = '';
     $lines[] = 'Additional information:';
     $lines[] = "Transaction ID: {$tx}";
-    $lines[] = SITE_URL;
+    $lines[] = $site;
     $lines[] = "UTM source: "   . ($d['utm_source']   ?? '');
     $lines[] = "UTM medium: "   . ($d['utm_medium']   ?? '');
     $lines[] = "UTM campaign: " . ($d['utm_campaign'] ?? '');
@@ -66,23 +72,6 @@ function build_text($d, $tx) {
     $lines[] = "UTM term: "     . ($d['utm_term']     ?? '');
     $lines[] = '-----';
     return implode("\n", $lines);
-}
-
-function send_tg($token, $chat_id, $text, &$err) {
-    $body = json_encode(['chat_id' => $chat_id, 'text' => $text]);
-    $ctx  = stream_context_create(['http' => [
-        'method'        => 'POST',
-        'header'        => "Content-Type: application/json\r\n",
-        'content'       => $body,
-        'timeout'       => 10,
-        'ignore_errors' => true,
-    ]]);
-    $resp = @file_get_contents("https://api.telegram.org/bot{$token}/sendMessage", false, $ctx);
-    if ($resp === false) { $err = 'network'; return false; }
-    $j = json_decode($resp, true);
-    if (!empty($j['ok'])) return true;
-    $err = $j['description'] ?? 'unknown';
-    return false;
 }
 
 function smtp_send($host, $port, $user, $pass, $from, $from_name, $to, $subject, $body, &$err) {
