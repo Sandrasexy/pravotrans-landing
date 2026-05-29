@@ -57,16 +57,31 @@ $log   = date('Y-m-d H:i:s')
 file_put_contents(LOG_FILE, $log, FILE_APPEND | LOCK_EX);
 
 function send_tg($token, $chat_id, $text, &$err) {
+    $url  = "https://api.telegram.org/bot{$token}/sendMessage";
     $body = json_encode(['chat_id' => $chat_id, 'text' => $text]);
-    $ctx  = stream_context_create(['http' => [
-        'method'        => 'POST',
-        'header'        => "Content-Type: application/json\r\n",
-        'content'       => $body,
-        'timeout'       => 10,
-        'ignore_errors' => true,
-    ]]);
-    $resp = @file_get_contents("https://api.telegram.org/bot{$token}/sendMessage", false, $ctx);
-    if ($resp === false) { $err = 'network'; return false; }
+    if (function_exists('curl_init')) {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => $body,
+            CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 10,
+        ]);
+        $resp = curl_exec($ch);
+        if ($resp === false) { $err = curl_error($ch); curl_close($ch); return false; }
+        curl_close($ch);
+    } else {
+        $ctx = stream_context_create(['http' => [
+            'method'        => 'POST',
+            'header'        => "Content-Type: application/json\r\n",
+            'content'       => $body,
+            'timeout'       => 10,
+            'ignore_errors' => true,
+        ]]);
+        $resp = @file_get_contents($url, false, $ctx);
+        if ($resp === false) { $err = 'network'; return false; }
+    }
     $j = json_decode($resp, true);
     if (!empty($j['ok'])) return true;
     $err = $j['description'] ?? 'unknown';
