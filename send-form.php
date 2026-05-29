@@ -5,6 +5,8 @@ header('Access-Control-Allow-Methods: POST, OPTIONS');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { exit; }
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); exit; }
 
+const TG_TOKEN  = '7955244537:AAGK7mAfGoqZTjaK15RtsBG7BBvzMfGgjP8';
+const TG_CHAT   = '-4944581700';
 const SMTP_HOST = 'smtp.beget.com';
 const SMTP_PORT = 465;
 const SMTP_USER = 'peregruzmail@tiwmail.ru';
@@ -32,9 +34,14 @@ if (function_exists('fastcgi_finish_request')) {
 ignore_user_abort(true);
 set_time_limit(60);
 
-// Фоновая обработка: email
-$tx       = '10000001:' . time();
-$text     = build_text($d, $tx, 'https://' . ($_SERVER['HTTP_HOST'] ?? 'pravo-trans.ru') . '/');
+// Фоновая обработка: TG + email
+$tx      = '10000001:' . time();
+$site    = 'https://' . ($_SERVER['HTTP_HOST'] ?? 'pravo-trans.ru') . '/';
+$text    = build_text($d, $tx, $site);
+
+$tg_err = '';
+$tg_ok  = send_tg(TG_TOKEN, TG_CHAT, $text, $tg_err);
+
 $mail_err = '';
 $mail_ok  = smtp_send(SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS,
                       MAIL_FROM, MAIL_NAME, MAIL_TO, MAIL_SUBJ, $text, $mail_err);
@@ -43,9 +50,27 @@ $name  = $d['name']  ?? ($d['orgName'] ?? '?');
 $phone = $d['phone'] ?? '?';
 $log   = date('Y-m-d H:i:s')
        . " | {$name} | {$phone}"
+       . " | TG:"    . ($tg_ok   ? 'OK' : "FAIL({$tg_err})")
        . " | Email:" . ($mail_ok ? 'OK' : "FAIL({$mail_err})")
        . " | TX:{$tx}\n";
 file_put_contents(LOG_FILE, $log, FILE_APPEND | LOCK_EX);
+
+function send_tg($token, $chat_id, $text, &$err) {
+    $body = json_encode(['chat_id' => $chat_id, 'text' => $text]);
+    $ctx  = stream_context_create(['http' => [
+        'method'        => 'POST',
+        'header'        => "Content-Type: application/json\r\n",
+        'content'       => $body,
+        'timeout'       => 10,
+        'ignore_errors' => true,
+    ]]);
+    $resp = @file_get_contents("https://api.telegram.org/bot{$token}/sendMessage", false, $ctx);
+    if ($resp === false) { $err = 'network'; return false; }
+    $j = json_decode($resp, true);
+    if (!empty($j['ok'])) return true;
+    $err = $j['description'] ?? 'unknown';
+    return false;
+}
 
 function build_text($d, $tx, $site) {
     $lines = ['Request details:'];
