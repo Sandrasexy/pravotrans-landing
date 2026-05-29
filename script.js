@@ -19,7 +19,7 @@ function buildTgText(data) {
   lines.push('');
   lines.push('Additional information:');
   lines.push('Transaction ID: 10000001:' + Date.now());
-  lines.push('https://pravo-trans.ru/');
+  lines.push(window.location.origin + '/');
   lines.push('UTM source: '   + (p.get('utm_source')   || ''));
   lines.push('UTM medium: '   + (p.get('utm_medium')   || ''));
   lines.push('UTM campaign: ' + (p.get('utm_campaign') || ''));
