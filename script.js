@@ -1,34 +1,3 @@
-const TG_BOT_TOKEN = '7955244537:AAGK7mAfGoqZTjaK15RtsBG7BBvzMfGgjP8';
-const TG_CHAT_ID   = '-4944581700';
-
-function buildTgText(data) {
-  const p = new URLSearchParams(window.location.search);
-  const lines = ['Request details:'];
-  const name = data.name || data.orgName;
-  if (name)            lines.push('Name: ' + name);
-  if (data.phone)      lines.push('Phone: ' + data.phone);
-  if (data.orgName)    lines.push('Organization: ' + data.orgName);
-  if (data.orgAddress) lines.push('Address: ' + data.orgAddress);
-  if (data.phone2)     lines.push('Phone 2: +7' + data.phone2);
-  if (data.email)      lines.push('Email: ' + data.email);
-  if (data.inn)        lines.push('INN: ' + data.inn);
-  if (data.kpp)        lines.push('KPP: ' + data.kpp);
-  if (data.ogrn)       lines.push('OGRN: ' + data.ogrn);
-  if (data.okpo)       lines.push('OKPO: ' + data.okpo);
-  if (data.message)    lines.push('Message: ' + data.message);
-  lines.push('');
-  lines.push('Additional information:');
-  lines.push('Transaction ID: 10000001:' + Date.now());
-  lines.push(window.location.origin + '/');
-  lines.push('UTM source: '   + (p.get('utm_source')   || ''));
-  lines.push('UTM medium: '   + (p.get('utm_medium')   || ''));
-  lines.push('UTM campaign: ' + (p.get('utm_campaign') || ''));
-  lines.push('UTM content: '  + (p.get('utm_content')  || ''));
-  lines.push('UTM term: '     + (p.get('utm_term')     || ''));
-  lines.push('-----');
-  return lines.join('\n');
-}
-
 let _formSent = false;
 function submitForm(data) {
   if (_formSent) return;
@@ -41,15 +10,6 @@ function submitForm(data) {
   data.utm_content  = p.get('utm_content')  || '';
   data.utm_term     = p.get('utm_term')     || '';
 
-  // TG из браузера — keepalive гарантирует отправку даже после редиректа
-  fetch('https://api.telegram.org/bot' + TG_BOT_TOKEN + '/sendMessage', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({chat_id: TG_CHAT_ID, text: buildTgText(data)}),
-    keepalive: true
-  }).catch(e => console.warn('TG error', e));
-
-  // Email через сервер — keepalive, PHP отвечает сразу и шлёт почту в фоне
   fetch('/send-form.php', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
