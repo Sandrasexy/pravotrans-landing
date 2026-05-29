@@ -29,7 +29,11 @@ function buildTgText(data) {
   return lines.join('\n');
 }
 
+let _formSent = false;
 function submitForm(data) {
+  if (_formSent) return;
+  _formSent = true;
+
   const p = new URLSearchParams(window.location.search);
   data.utm_source   = p.get('utm_source')   || '';
   data.utm_medium   = p.get('utm_medium')   || '';
