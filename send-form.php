@@ -34,7 +34,7 @@ set_time_limit(60);
 
 // Фоновая обработка: email
 $tx       = '10000001:' . time();
-$text     = build_text($d, $tx, 'https://pravo-trans.ru/');
+$text     = build_text($d, $tx, 'https://' . ($_SERVER['HTTP_HOST'] ?? 'pravo-trans.ru') . '/');
 $mail_err = '';
 $mail_ok  = smtp_send(SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS,
                       MAIL_FROM, MAIL_NAME, MAIL_TO, MAIL_SUBJ, $text, $mail_err);
