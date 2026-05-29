@@ -12,7 +12,6 @@ const SMTP_PORT = 465;
 const SMTP_USER = 'peregruzmail@tiwmail.ru';
 const SMTP_PASS = 'A1yZCqanS!0J';
 const MAIL_FROM = 'peregruzmail@tiwmail.ru';
-const MAIL_NAME = 'pravo-trans.ru — заявка с сайта';
 const MAIL_TO   = ['otmenim@yandex.ru', 'pr@topinweb.ru'];
 const MAIL_SUBJ = 'Новая заявка - перегруз, негабарит';
 const LOG_FILE  = __DIR__ . '/submissions.log';
@@ -35,8 +34,10 @@ ignore_user_abort(true);
 set_time_limit(60);
 
 // Фоновая обработка: TG + email
-$tx      = '10000001:' . time();
-$site    = 'https://' . ($_SERVER['HTTP_HOST'] ?? 'pravo-trans.ru') . '/';
+$host    = $_SERVER['HTTP_HOST'] ?? 'unknown';
+$tx      = time();
+$site    = 'https://' . $host . '/';
+$mail_name = $host . ' — заявка с сайта';
 $text    = build_text($d, $tx, $site);
 
 $tg_err = '';
@@ -44,7 +45,7 @@ $tg_ok  = send_tg(TG_TOKEN, TG_CHAT, $text, $tg_err);
 
 $mail_err = '';
 $mail_ok  = smtp_send(SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS,
-                      MAIL_FROM, MAIL_NAME, MAIL_TO, MAIL_SUBJ, $text, $mail_err);
+                      MAIL_FROM, $mail_name, MAIL_TO, MAIL_SUBJ, $text, $mail_err);
 
 $name  = $d['name']  ?? ($d['orgName'] ?? '?');
 $phone = $d['phone'] ?? '?';
