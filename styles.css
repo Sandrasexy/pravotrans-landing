@@ -322,3 +322,7 @@ ul { list-style: none; }
   .modal-box         { padding: 36px 20px 28px; }
   .form-wrap         { padding: 28px 16px; }
 }
+
+/* ─── Quiz desktop-only sections ───────────────────── */
+.mq-desktop { display: block; }
+@media (max-width: 768px) { .mq-desktop { display: none; } }
